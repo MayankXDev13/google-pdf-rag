@@ -8,6 +8,7 @@ from config import (
     AWS_SECRET_ACCESS_KEY,
     INDEX_PREFIX,
 )
+from logger import logger
 
 
 def get_s3_client():
@@ -48,6 +49,7 @@ def download_file(filename: str) -> bytes:
         return response["Body"].read()
     except ClientError as e:
         if e.response["Error"]["Code"] == "NoSuchKey":
+            logger.warning("S3 file not found: %s", filename)
             raise FileNotFoundError(f"File not found in S3: {filename}")
         raise
 
@@ -58,9 +60,10 @@ def delete_file(filename: str) -> bool:
 
     try:
         s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+        logger.info("Deleted object from S3: %s", s3_key)
         return True
     except ClientError as e:
-        print(f"Error deleting file from S3: {e}")
+        logger.exception("Error deleting file from S3: %s", e)
         return False
 
 
@@ -93,7 +96,7 @@ def list_files() -> list[str]:
                     files.append(filename)
         return files
     except ClientError as e:
-        print(f"Error listing files from S3: {e}")
+        logger.exception("Error listing files from S3: %s", e)
         return []
 
 

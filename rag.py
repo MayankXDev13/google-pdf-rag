@@ -5,6 +5,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from retrieval import get_retriever
 from config import LLM_MODEL, GOOGLE_API_KEY
+from logger import logger
 
 llm = ChatGoogleGenerativeAI(
     model=LLM_MODEL,

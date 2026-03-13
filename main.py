@@ -7,6 +7,7 @@ from vectorstore import (
     add_documents,
     delete_file as delete_from_vectorstore,
     list_indexed_files,
+    file_exists_in_index,
 )
 from s3_utils import (
     upload_file,
@@ -15,6 +16,7 @@ from s3_utils import (
     file_exists,
     list_files as list_s3_files,
 )
+from logger import logger
 from rag import ask as rag_ask
 
 app = FastAPI(
@@ -39,18 +41,23 @@ async def ingest(
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
-    filename = file.filename
+    filename = file.filename or "uploaded.pdf"
 
     if not rebuild and file_exists(filename):
-        raise HTTPException(
-            status_code=409,
-            detail=f"File '{filename}' already exists. Use rebuild=true to re-index.",
-        )
+        # file already present in S3; still check vectorstore by hash after reading
+        logger.info("File %s already exists in S3", filename)
 
     file_data = await file.read()
     file_hash = get_file_hash(file_data)
 
+    if not rebuild and file_exists_in_index(filename, file_hash):
+        raise HTTPException(
+            status_code=409,
+            detail=f"File '{filename}' already indexed. Use rebuild=true to re-index.",
+        )
+
     if rebuild:
+        # delete by specific file_id
         delete_from_vectorstore(filename, file_hash)
 
     upload_file(file_data, filename)
@@ -78,12 +85,13 @@ async def query(request: QueryRequest):
     try:
         result = rag_ask(
             question=request.question,
-            k=request.k,
+            k=request.k or 3,
             filename=request.filename,
         )
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error during query: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/files")
@@ -96,14 +104,28 @@ async def list_files():
     return {"files": all_files}
 
 
+@app.get("/health")
+async def health():
+    return JSONResponse({"status": "ok"})
+
+
 @app.delete("/files/{filename}")
 async def delete_file(filename: str):
     from config import INDEX_NAME
 
-    file_hash = "unknown"
+    # Attempt to delete from S3 and vectorstore. If we don't know the file hash,
+    # delete by filename metadata in the vectorstore.
+    try:
+        s3_deleted = delete_from_s3(filename)
+    except Exception:
+        logger.exception("Error deleting file from S3: %s", filename)
+        s3_deleted = False
 
-    s3_deleted = delete_from_s3(filename)
-    vector_deleted = delete_from_vectorstore(filename, file_hash)
+    try:
+        vector_deleted = delete_from_vectorstore(filename)
+    except Exception:
+        logger.exception("Error deleting file from vectorstore: %s", filename)
+        vector_deleted = False
 
     if not s3_deleted and not vector_deleted:
         raise HTTPException(status_code=404, detail="File not found")

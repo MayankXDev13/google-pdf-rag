@@ -4,6 +4,7 @@ import tempfile
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from logger import logger
 
 
 def load_pdf(file_data: bytes) -> list[Document]:
@@ -22,7 +23,10 @@ def load_pdf(file_data: bytes) -> list[Document]:
     finally:
         # Remove temp file after loading
         if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                logger.exception("Failed to remove temp file: %s", tmp_path)
 
     return documents
 
