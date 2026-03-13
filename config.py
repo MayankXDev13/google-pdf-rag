@@ -9,7 +9,7 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = "pdf-rag"
 INDEX_PREFIX = "pdf-rag"
 
-EMBED_MODEL = "models/embedding-001"
+EMBED_MODEL = "models/gemini-embedding-001"
 LLM_MODEL = "gemini-1.5-flash-002"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
