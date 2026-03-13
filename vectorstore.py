@@ -2,7 +2,7 @@ import hashlib
 from typing import Optional
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
-from langchain.schema import Document
+from langchain_core.documents import Document
 from config import PINECONE_API_KEY, INDEX_NAME
 from embeddings import embeddings
 
