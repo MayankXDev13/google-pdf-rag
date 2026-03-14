@@ -86,7 +86,9 @@ def list_files() -> list[str]:
     s3_client = get_s3_client()
 
     try:
-        response = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=INDEX_PREFIX + "/")
+        response = s3_client.list_objects_v2(
+            Bucket=S3_BUCKET_NAME, Prefix=INDEX_PREFIX + "/"
+        )
         files = []
         if "Contents" in response:
             for obj in response["Contents"]:

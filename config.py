@@ -8,7 +8,7 @@ PINECONE_INDEX_NAME = "pdf-embeddings"
 INDEX_PREFIX = "pdf-rag"
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "models/gemini-embedding-001")
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash-002")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")

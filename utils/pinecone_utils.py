@@ -74,7 +74,7 @@ def list_indexed_files() -> list[str]:
     try:
         index = pc.Index(PINECONE_INDEX_NAME)
         stats = index.describe_index_stats()
-        
+
         filenames = set()
         if "namespaces" in stats:
             for ns_stats in stats["namespaces"].values():
@@ -83,19 +83,19 @@ def list_indexed_files() -> list[str]:
                         if key == "filename":
                             # Query to get unique filenames
                             pass
-        
+
         query_response = index.query(
             vector=[0.0] * 768,
             top_k=10000,
             include_metadata=True,
             include_values=False,
         )
-        
+
         filenames = set()
         for match in query_response.get("matches", []):
             if "metadata" in match and "filename" in match["metadata"]:
                 filenames.add(match["metadata"]["filename"])
-        
+
         return sorted(list(filenames))
     except Exception as e:
         print(f"Error listing indexed files: {e}")
