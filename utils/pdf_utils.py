@@ -30,7 +30,10 @@ def load_pdf(file_data: bytes) -> list[Document]:
 
 def chunk_documents(documents, filename, chunk_size=800, overlap=100):
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=overlap
+    )
 
     chunks = []
     chunk_id = 0
@@ -42,14 +45,14 @@ def chunk_documents(documents, filename, chunk_size=800, overlap=100):
         for split in splits:
 
             chunks.append(
-                {
-                    "text": split,
-                    "metadata": {
+                Document(
+                    page_content=split,
+                    metadata={
                         "filename": filename,
                         "page": doc.metadata.get("page", 1),
                         "chunk_id": f"{filename}_{chunk_id}",
                     },
-                }
+                )
             )
 
             chunk_id += 1
