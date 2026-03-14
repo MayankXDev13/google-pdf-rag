@@ -4,6 +4,7 @@ from langchain_pinecone import PineconeVectorStore
 from config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 from embeddings import embeddings
 
+
 def add_documents(chunks: List, batch_size: int = 50):
     """
     Store document chunks in Pinecone using batch insertion.
@@ -23,19 +24,15 @@ def add_documents(chunks: List, batch_size: int = 50):
 
         for i in range(0, total_chunks, batch_size):
 
-            batch = chunks[i:i + batch_size]
+            batch = chunks[i : i + batch_size]
 
             vector_store.add_documents(batch)
 
-        return {
-            "status": "success",
-            "chunks_stored": total_chunks
-        }
+        return {"status": "success", "chunks_stored": total_chunks}
 
     except Exception as e:
-        raise RuntimeError(
-            f"Failed to store documents in Pinecone: {e}"
-        )
+        raise RuntimeError(f"Failed to store documents in Pinecone: {e}")
+
 
 def delete_documents(ids: list[str]):
     """

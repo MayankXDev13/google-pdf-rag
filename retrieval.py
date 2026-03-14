@@ -20,11 +20,8 @@ def get_retriever(k: int = 3, filename: Optional[str] = None):
 
     # Apply metadata filter if filename provided
     if filename:
-        search_kwargs["filter"] = {
-            "filename": {"$eq": filename}
-        }
+        search_kwargs["filter"] = {"filename": {"$eq": filename}}
 
     return vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs=search_kwargs
+        search_type="similarity", search_kwargs=search_kwargs
     )

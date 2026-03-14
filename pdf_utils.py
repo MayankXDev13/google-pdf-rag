@@ -35,10 +35,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 async def chunk_documents(documents, filename):
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
     chunks = []
     chunk_id = 0
@@ -49,14 +46,16 @@ async def chunk_documents(documents, filename):
 
         for split in splits:
 
-            chunks.append({
-                "text": split,
-                "metadata": {
-                    "filename": filename,
-                    "page": doc.metadata.get("page", 1),
-                    "chunk_id": f"{filename}_{chunk_id}"
+            chunks.append(
+                {
+                    "text": split,
+                    "metadata": {
+                        "filename": filename,
+                        "page": doc.metadata.get("page", 1),
+                        "chunk_id": f"{filename}_{chunk_id}",
+                    },
                 }
-            })
+            )
 
             chunk_id += 1
 

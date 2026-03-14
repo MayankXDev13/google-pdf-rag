@@ -63,34 +63,21 @@ class QueryRequest(BaseModel):
     )
 
 
-
-
-
 @app.post("/query")
 def query(request: QueryRequest):
 
     if not request.question:
-        raise HTTPException(
-            status_code=400,
-            detail="Question cannot be empty"
-        )
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
 
     try:
 
-        result = chat(
-            question=request.question,
-            k=request.k,
-            filename=request.filename
-        )
+        result = chat(question=request.question, k=request.k, filename=request.filename)
 
         return {
             "question": request.question,
             "answer": result["answer"],
-            "sources": result["sources"]
+            "sources": result["sources"],
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Query failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
