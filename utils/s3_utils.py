@@ -1,4 +1,3 @@
-import hashlib
 import boto3
 from botocore.exceptions import ClientError
 from config import (
@@ -8,10 +7,11 @@ from config import (
     AWS_SECRET_ACCESS_KEY,
     INDEX_PREFIX,
 )
-from logger import logger
+from io import BytesIO
 
 
 def get_s3_client():
+    """Get S3 client"""
     return boto3.client(
         "s3",
         region_name=S3_REGION,
@@ -21,14 +21,14 @@ def get_s3_client():
 
 
 def get_s3_key(filename: str) -> str:
+    """Get S3 path(key)"""
     return f"{INDEX_PREFIX}/{filename}"
 
 
 def upload_file(file_data: bytes, filename: str) -> str:
+    """Upload the file to S3"""
     s3_client = get_s3_client()
     s3_key = get_s3_key(filename)
-
-    from io import BytesIO
 
     s3_client.upload_fileobj(
         BytesIO(file_data),
@@ -41,6 +41,7 @@ def upload_file(file_data: bytes, filename: str) -> str:
 
 
 def download_file(filename: str) -> bytes:
+    """Download the file from S3"""
     s3_client = get_s3_client()
     s3_key = get_s3_key(filename)
 
@@ -49,25 +50,27 @@ def download_file(filename: str) -> bytes:
         return response["Body"].read()
     except ClientError as e:
         if e.response["Error"]["Code"] == "NoSuchKey":
-            logger.warning("S3 file not found: %s", filename)
+            print(f"Warning: S3 file not found: {filename}")
             raise FileNotFoundError(f"File not found in S3: {filename}")
         raise
 
 
-def delete_file(filename: str) -> bool:
+def delete_from_s3(filename: str) -> bool:
+    """Delete the file from S3"""
     s3_client = get_s3_client()
     s3_key = get_s3_key(filename)
 
     try:
         s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
-        logger.info("Deleted object from S3: %s", s3_key)
+        print(f"Deleted object from S3: {s3_key}")
         return True
     except ClientError as e:
-        logger.exception("Error deleting file from S3: %s", e)
+        print(f"Error deleting file from S3: {e}")
         return False
 
 
 def file_exists(filename: str) -> bool:
+    """Check if the file exists in S3"""
     s3_client = get_s3_client()
     s3_key = get_s3_key(filename)
 
@@ -79,26 +82,20 @@ def file_exists(filename: str) -> bool:
 
 
 def list_files() -> list[str]:
+    """List all files in the S3 bucket with the index prefix"""
     s3_client = get_s3_client()
-    prefix = f"{INDEX_PREFIX}/"
 
     try:
-        response = s3_client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=prefix)
-        if "Contents" not in response:
-            return []
-
+        response = s3_client.list_objects_v2(
+            Bucket=S3_BUCKET_NAME, Prefix=INDEX_PREFIX + "/"
+        )
         files = []
-        for obj in response["Contents"]:
-            key = obj["Key"]
-            if key.startswith(prefix):
-                filename = key[len(prefix) :]
-                if filename:
-                    files.append(filename)
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                key = obj["Key"]
+                filename = key.replace(INDEX_PREFIX + "/", "", 1)
+                files.append(filename)
         return files
     except ClientError as e:
-        logger.exception("Error listing files from S3: %s", e)
+        print(f"Error listing files from S3: {e}")
         return []
-
-
-def compute_file_hash(data: bytes) -> str:
-    return hashlib.md5(data).hexdigest()

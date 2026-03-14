@@ -5,7 +5,6 @@ embeddings = GoogleGenerativeAIEmbeddings(
     model=EMBED_MODEL,
     google_api_key=GOOGLE_API_KEY,
     task_type="retrieval_document",
-
 )
 
 query_embeddings = GoogleGenerativeAIEmbeddings(
